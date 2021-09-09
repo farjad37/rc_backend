@@ -5,6 +5,7 @@ const validateRequest = require('../_middleware/validate-request');
 const authorize = require('../_middleware/authorize')
 const userService = require('./user.service');
 
+
 // routes
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/register', registerSchema, register);
@@ -13,6 +14,8 @@ router.get('/current', authorize(), getCurrent);
 router.get('/:id', authorize(), getById);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
+router.post('/signup', registerSchema,SignUpController);
+//router.post('/verification', VerificationController);
 
 module.exports = router;
 
@@ -31,11 +34,14 @@ function authenticate(req, res, next) {
 }
 
 function registerSchema(req, res, next) {
+
     const schema = Joi.object({
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
+        email: Joi.string().required(),
         username: Joi.string().required(),
         password: Joi.string().min(6).required()
+        
     });
     validateRequest(req, next, schema);
 }
@@ -83,3 +89,15 @@ function _delete(req, res, next) {
         .then(() => res.json({ message: 'User deleted successfully' }))
         .catch(next);
 }
+
+ function SignUpController  (req, res, next) {
+    
+    userService.create(req.body)
+    
+    // userService.getUserverification()
+    .then(() => res.json({ message: 'Registration successful' }))
+    .catch(next);
+    
+  };
+
+

@@ -2,14 +2,15 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../_helpers/db');
-
+const nodemailer  = require('../configs/nodemailer.config');
 module.exports = {
     authenticate,
     getAll,
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    getUserverification
 };
 
 async function authenticate({ username, password }) {
@@ -32,9 +33,10 @@ async function getById(id) {
 }
 
 async function create(params) {
+    
     // validate
-    if (await db.User.findOne({ where: { username: params.username } })) {
-        throw 'Username "' + params.username + '" is already taken';
+    if (await db.User.findOne({ where: { email: params.email } })) {
+        throw 'User with email address  "' + params.email + '" is already taken';
     }
 
     // hash password
@@ -43,7 +45,23 @@ async function create(params) {
     }
 
     // save user
-    await db.User.create(params);
+    await db.User.create(params)
+    .then(result => {
+    db.verification.create({
+        userId: result.id,
+        token: Math.random().toString(36).slice(2)
+      }).then((vresult) => {
+        console.log(nodemailer.sendConfirmationEmail(result.email, vresult.token), "okkkk")
+      }).catch((error) => {
+        throw error;
+      }) 
+        //return res.status(200).json(`${user.email} account created successfully`);
+      
+    }).catch((error) => {
+        throw error;
+      });
+    
+    
 }
 
 async function update(id, params) {
@@ -78,6 +96,16 @@ async function getUser(id) {
     const user = await db.User.findByPk(id);
     if (!user) throw 'User not found';
     return user;
+}
+
+async function getUserverification() {
+    const user = await db.User.findOne({
+        order: [ [ 'id', 'DESC' ]],
+    });
+   await db.verification.create({
+        userId: user.id,
+        token: Math.random().toString(36).slice(2)
+      })
 }
 
 function omitHash(user) {

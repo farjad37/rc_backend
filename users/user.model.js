@@ -6,8 +6,11 @@ function model(sequelize) {
     const attributes = {
         firstName: { type: DataTypes.STRING, allowNull: false },
         lastName: { type: DataTypes.STRING, allowNull: false },
+        email:{type: DataTypes.STRING, allowNull: false },
         username: { type: DataTypes.STRING, allowNull: false },
-        hash: { type: DataTypes.STRING, allowNull: false }
+        hash: { type: DataTypes.STRING, allowNull: false },
+
+        isVerified: {type: DataTypes.STRING},
     };
 
     const options = {
@@ -21,6 +24,15 @@ function model(sequelize) {
         }
     };
     
-    return sequelize.define('admin-user', attributes, options);
+    return sequelize.define('user', attributes, options, {
+        classMethods: {
+          associate: function(models) {
+           User.hasOne(models.VerificationToken, {
+                as: 'verificationtoken',
+                foreignKey: 'userId',
+                foreignKeyConstraint: true,
+              });
+          }
+        }
+      });
 }
-
